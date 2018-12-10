@@ -19,7 +19,7 @@ ssh root@<ip-address>
 ```
 Download and run script:
 ```sh
-wget https://raw.githubusercontent.com/tuuzdu/de_aira_rpi/82b68f2b3f81864125096c6762b092260a1bb3c7/nixos_build_rpi.sh
+curl --insecure https://raw.githubusercontent.com/tuuzdu/de_aira_rpi/82b68f2b3f81864125096c6762b092260a1bb3c7/nixos_build_rpi.sh --output nixos_install_rpi.sh -L
 chmod +x nixos_install_rpi.sh
 ./nixos_install_rpi.sh
 ```
