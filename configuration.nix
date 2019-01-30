@@ -9,15 +9,15 @@
     enableRedistributableFirmware = true;
     firmware = [
       (pkgs.stdenv.mkDerivation {
-        name = "broadcom-rpi3-extra";
-        src = pkgs.fetchurl {
-        url = "https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/54bab3d/brcm80211/brcm/brcmfmac43430-sdio.txt";
-        sha256 = "19bmdd7w0xzybfassn7x4rb30l70vynnw3c80nlapna2k57xwbw7";
-        };
+          name = "broadcom-rpi3bplus-extra";
+          src = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/b518de4/brcm/brcmfmac43455-sdio.txt";
+            sha256 = "0r4bvwkm3fx60bbpwd83zbjganjnffiq1jkaj0h20bwdj9ysawg9";
+          };
         phases = [ "installPhase" ];
         installPhase = ''
-        mkdir -p $out/lib/firmware/brcm
-        cp $src $out/lib/firmware/brcm/brcmfmac43430-sdio.txt
+          mkdir -p $out/lib/firmware/brcm
+          cp $src $out/lib/firmware/brcm/brcmfmac43455-sdio.txt
         '';
       })
     ];
@@ -48,7 +48,7 @@
         version = 3;
         # Autoboot without serial port interrupt on uboot
         firmwareConfig = ''
-          boot_delay=-1
+          boot_delay=-2
         '';
       };
     };
@@ -81,11 +81,15 @@
     # Open ports for ROS
     firewall.enable = false;
     # Hosts for remote ROS connections
-    hosts = { "192.168.0.106" = [ "tuuzdu-AIR13" ]; };
+    # hosts = { "10.0.0.1" = [ "linux-work" ]; };
+
     # WiFi AP
     interfaces.wlan0.ipv4.addresses = [ { address = "10.0.0.1"; prefixLength = 24; } ];
+
     # Bridge for Internet connection via WiFi
     # bridges.br0.interfaces = [ "eth0" ];
+
+    # WiFi client
     # wireless.enable = true;
     # wireless.interfaces = ["wlan1"];
     # wireless.networks = { 
@@ -102,6 +106,7 @@
   environment.systemPackages = with pkgs; [
     wget vim htop screen git usbutils python3 gcc gnumake tmux usb-modeswitch
   ];
+  environment.variables.ROS_IP = "10.0.0.1";
 
   services = {
 
@@ -128,31 +133,46 @@
         rsn_pairwise=CCMP
         ieee80211n=1
         wmm_enabled=0
+        # Uncomment line below for bridge
         # bridge=br0
       '';
     };
 
-    dhcpd4 = {
+    dnsmasq = {
       enable = true;
-      interfaces = [ "wlan0" ];
       extraConfig = ''
-        ddns-update-style none;
-        ignore client-updates;
-        authoritative;
-        option local-wpad code 252 = text;
-        subnet
-        10.0.0.0 netmask 255.255.255.0 {
-          option routers 10.0.0.1;
-          option subnet-mask 255.255.255.0;
-          option broadcast-address 10.0.0.255;
-          option domain-name-servers 8.8.8.8, 8.8.4.4;
-          option time-offset 0;
-          range 10.0.0.2 10.0.0.10;
-          default-lease-time 1209600;
-          max-lease-time 1814400;
-        }
+        interface=wlan0
+        address=/de/10.0.0.1
+        dhcp-range=10.0.0.2,10.0.0.10,12h
+        no-hosts
+        filterwin2k
+        bogus-priv
+        domain-needed
+        quiet-dhcp6
       '';
     };
+
+   # dhcpd4 = {
+   #   enable = true;
+   #   interfaces = [ "wlan0" ];
+   #   extraConfig = ''
+   #     ddns-update-style none;
+   #     ignore client-updates;
+   #     authoritative;
+   #     option local-wpad code 252 = text;
+   #     subnet
+   #     10.0.0.0 netmask 255.255.255.0 {
+   #       option routers 10.0.0.1;
+   #       option subnet-mask 255.255.255.0;
+   #       option broadcast-address 10.0.0.255;
+   #       option domain-name-servers 8.8.8.8, 8.8.4.4;
+   #       option time-offset 0;
+   #       range 10.0.0.2 10.0.0.10;
+   #       default-lease-time 1209600;
+   #       max-lease-time 1814400;
+   #     }
+   #   '';
+   # };
 
     # IPFS
     ipfs = {
